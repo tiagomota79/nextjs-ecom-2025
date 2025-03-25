@@ -17,7 +17,7 @@ export const insertProductSchema = z.object({
     .min(3, 'Category must be at least 3 characters')
     .max(255),
   brand: z.string().min(3, 'Brand must be at least 3 characters').max(255),
-  Description: z
+  description: z
     .string()
     .min(3, 'Description must be at least 3 characters')
     .max(255),
