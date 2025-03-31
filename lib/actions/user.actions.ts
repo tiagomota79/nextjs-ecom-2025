@@ -4,6 +4,7 @@ import { signIn, signOut } from '@/auth';
 import { isRedirectError } from 'next/dist/client/components/redirect-error';
 import { hashSync } from 'bcrypt-ts-edge';
 import { prisma } from '@/db/prisma';
+import { formatZodError } from '../utils';
 
 export async function signInWithCredentials(
   prevState: unknown,
@@ -59,11 +60,12 @@ export async function signUpUser(prev: unknown, formData: FormData) {
     });
 
     return { success: true, message: 'User created successfully' };
-  } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (error: any) {
     if (isRedirectError(error)) {
       throw error;
     }
 
-    return { success: false, message: 'Error creating user' };
+    return { success: false, message: formatZodError(error) };
   }
 }
