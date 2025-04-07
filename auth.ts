@@ -53,8 +53,8 @@ export const config = {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     async session({ session, user, trigger, token }: any) {
       session.user.id = token.sub;
-      // session.user.role = token.role;
-      // session.user.name = token.name;
+      session.user.role = token.role;
+      session.user.name = token.name;
 
       if (trigger === 'update') {
         session.user.name = user.name;
@@ -63,28 +63,30 @@ export const config = {
       return session;
     },
 
-    // async jwt({ token, user }: any) {
-    //   console.log('token', token);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    async jwt({ token, user }: any) {
+      // Assign user fields to token
+      if (user) {
+        token.role = user.role;
 
-    //   if (user) {
-    //     token.role = user.role;
+        // If user has no name, set it to email
+        if (user.name === 'NO_NAME') {
+          token.name = user.email!.split('@')[0];
 
-    //     if (!user.name || user.name === 'NO_NAME') {
-    //       token.name = user.email!.split('@')[0];
+          // Update database to reflect the name change
+          await prisma.user.update({
+            where: {
+              id: user.id,
+            },
+            data: {
+              name: token.name,
+            },
+          });
+        }
+      }
 
-    //       await prisma.user.update({
-    //         where: {
-    //           id: user.id,
-    //         },
-    //         data: {
-    //           name: token.name,
-    //         },
-    //       });
-    //     }
-
-    //     return token;
-    //   }
-    // },
+      return token;
+    },
   },
 } satisfies NextAuthConfig;
 
