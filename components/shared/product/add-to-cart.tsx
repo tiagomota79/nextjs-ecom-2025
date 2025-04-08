@@ -1,12 +1,12 @@
 'use client';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
-import { Plus } from 'lucide-react';
-import { CartItem } from '@/types';
+import { Plus, Minus } from 'lucide-react';
+import { Cart, CartItem } from '@/types';
 import { toast } from 'sonner';
-import { addItemToCard } from '@/lib/actions/cart.actions';
+import { addItemToCard, removeItemFromCart } from '@/lib/actions/cart.actions';
 
-const AddToCart = ({ item }: { item: CartItem }) => {
+const AddToCart = ({ item, cart }: { item: CartItem; cart?: Cart }) => {
   const router = useRouter();
 
   const handleAddToCart = async () => {
@@ -29,7 +29,43 @@ const AddToCart = ({ item }: { item: CartItem }) => {
     });
   };
 
-  return (
+  const handleRemoveFromCart = async () => {
+    const response = await removeItemFromCart(item.productId);
+
+    if (!response?.success) {
+      toast.error(response?.message, {
+        style: { backgroundColor: 'red', color: 'white' },
+      });
+    }
+
+    toast.success(response.message, {
+      action: { label: 'View Cart', onClick: () => router.push('/cart') },
+      style: { backgroundColor: 'green', color: 'white' },
+      actionButtonStyle: {
+        backgroundColor: 'white',
+        color: 'green',
+      },
+    });
+
+    return;
+  };
+
+  // Check if item is already in cart
+  const existingItem =
+    cart &&
+    cart.items.find((cartItem) => cartItem.productId === item.productId);
+
+  return existingItem ? (
+    <div className='flex gap-2 items-center'>
+      <Button type='button' variant='outline' onClick={handleRemoveFromCart}>
+        <Minus className='h-4 w-4' />
+      </Button>
+      <span className='px-2'>{existingItem.qty}</span>
+      <Button type='button' variant='outline' onClick={handleAddToCart}>
+        <Plus className='h-4 w-4' />
+      </Button>
+    </div>
+  ) : (
     <Button className='w-full' type='button' onClick={handleAddToCart}>
       <Plus />
       Add to Cart
