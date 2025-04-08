@@ -2,9 +2,6 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 export async function middleware(request: NextRequest) {
-  //   const cookies = request.cookies;
-
-  //   console.log('cookies', cookies);
   // Check for session cart cookie
   if (!request.cookies.get('sessionCartId')) {
     const sessionCartId = crypto.randomUUID();

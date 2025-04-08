@@ -1,10 +1,32 @@
 'use server';
 import { CartItem } from '@/types';
 import { cookies } from 'next/headers';
-import { convertToPlainObject, formatZodError } from '../utils';
+import {
+  convertToPlainObject,
+  formatZodError,
+  roundToTwoDecimalPlaces,
+} from '../utils';
 import { auth } from '@/auth';
 import { prisma } from '@/db/prisma';
-import { cartItemSchema } from '../validators';
+import { cartItemSchema, insertCartSchema } from '../validators';
+import { revalidatePath } from 'next/cache';
+
+// Calculate cart prices
+const calcPrice = (items: CartItem[]) => {
+  const itemsPrice = roundToTwoDecimalPlaces(
+      items.reduce((acc, item) => acc + Number(item.price) * item.qty, 0)
+    ),
+    shippingPrice = roundToTwoDecimalPlaces(itemsPrice > 100 ? 0 : 10),
+    taxPrice = roundToTwoDecimalPlaces(0.15 * itemsPrice),
+    totalPrice = roundToTwoDecimalPlaces(itemsPrice + shippingPrice + taxPrice);
+
+  return {
+    itemsPrice: itemsPrice.toFixed(2),
+    shippingPrice: shippingPrice.toFixed(2),
+    taxPrice: taxPrice.toFixed(2),
+    totalPrice: totalPrice.toFixed(2),
+  };
+};
 
 export async function addItemToCard(data: CartItem) {
   try {
@@ -30,13 +52,30 @@ export async function addItemToCard(data: CartItem) {
       },
     });
 
-    // TESTING
-    console.log({ sessionCartId, userId, 'item requested': item, product });
+    if (!product) throw new Error('Product not found');
 
-    return {
-      success: true,
-      message: 'Item added to cart',
-    };
+    if (!cart) {
+      // Create new cart if it doesn't exist
+      const newCart = insertCartSchema.parse({
+        userId,
+        items: [item],
+        sessionCartId,
+        ...calcPrice([item]),
+      });
+
+      // Add the new cart to the database
+      await prisma.cart.create({
+        data: newCart,
+      });
+
+      // Revalidate product page
+      revalidatePath(`/product/${item.slug}`);
+
+      return {
+        success: true,
+        message: 'Item added to cart',
+      };
+    }
   } catch (error) {
     return {
       success: false,

@@ -12,8 +12,8 @@ const AddToCart = ({ item }: { item: CartItem }) => {
   const handleAddToCart = async () => {
     const response = await addItemToCard(item);
 
-    if (!response.success) {
-      toast.error(response.message, {
+    if (!response?.success) {
+      toast.error(response?.message, {
         style: { backgroundColor: 'red', color: 'white' },
       });
       return;
