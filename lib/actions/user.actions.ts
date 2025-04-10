@@ -1,10 +1,11 @@
 'use server';
 import { signInFormSchema, signUpFormSchema } from '../validators';
-import { signIn, signOut } from '@/auth';
+import { auth, signIn, signOut } from '@/auth';
 import { isRedirectError } from 'next/dist/client/components/redirect-error';
 import { hashSync } from 'bcrypt-ts-edge';
 import { prisma } from '@/db/prisma';
 import { formatZodError } from '../utils';
+import { ShippingAddress } from '@/types';
 
 export async function signInWithCredentials(
   prevState: unknown,
@@ -81,4 +82,35 @@ export async function getUserById(id: string) {
   if (!user) throw new Error('User not found');
 
   return user;
+}
+
+// Update user address on db
+export async function updateUserAddress(data: ShippingAddress) {
+  try {
+    const session = await auth();
+
+    const currentUser = await getUserById(session?.user?.id as string);
+
+    if (!currentUser) throw new Error('User not found');
+
+    const address = {
+      fullName: data.fullName,
+      streetAddress: data.streetAddress,
+      city: data.city,
+      postalCode: data.postalCode,
+      country: data.country,
+    };
+
+    await prisma.user.update({
+      where: {
+        id: currentUser.id,
+      },
+      data: {
+        address,
+      },
+    });
+    return { success: true, message: 'Address updated successfully' };
+  } catch (error) {
+    return { success: false, message: formatZodError(error) };
+  }
 }
