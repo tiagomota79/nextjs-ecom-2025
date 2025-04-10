@@ -49,3 +49,21 @@ export function roundToTwoDecimalPlaces(value: number | string) {
     throw new Error('Invalid input: must be a number or a string');
   }
 }
+
+// Format currency
+const CURRENCY_FORMATTER = new Intl.NumberFormat('en-CA', {
+  style: 'currency',
+  currency: 'CAD',
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+export function formatCurrency(amount: number | string | null) {
+  if (typeof amount === 'number') {
+    return CURRENCY_FORMATTER.format(amount);
+  } else if (typeof amount === 'string') {
+    return CURRENCY_FORMATTER.format(Number(amount));
+  } else {
+    return 'Nan';
+  }
+}
