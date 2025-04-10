@@ -18,7 +18,6 @@ import { ArrowRight, Loader, Minus, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/utils';
 import { Cart } from '@/types';
-import { format } from 'path';
 
 const CartTable = ({ cart }: { cart?: Cart }) => {
   const router = useRouter();
