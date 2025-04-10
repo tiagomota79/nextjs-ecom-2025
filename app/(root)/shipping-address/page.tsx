@@ -19,7 +19,7 @@ const ShippingAddressPage = async () => {
   const session = await auth();
   const userId = session?.user?.id;
 
-  if (!userId) redirect('/');
+  if (!userId) redirect('/cart');
 
   const user = await getUserById(userId);
 
