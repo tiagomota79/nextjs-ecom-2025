@@ -4,7 +4,7 @@ import { prisma } from '@/db/prisma';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { compareSync } from 'bcrypt-ts-edge';
 import type { NextAuthConfig } from 'next-auth';
-// import { cookies } from 'next/headers';
+import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
 export const config = {
@@ -66,9 +66,10 @@ export const config = {
     },
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    async jwt({ token, user }: any) {
+    async jwt({ token, user, trigger }: any) {
       // Assign user fields to token
       if (user) {
+        token.id = user.id;
         token.role = user.role;
 
         // If user has no name, set it to email
@@ -84,6 +85,34 @@ export const config = {
               name: token.name,
             },
           });
+        }
+
+        if (trigger === 'signIn' || trigger === 'signUp') {
+          const cookiesObject = await cookies();
+          const sessionCartId = cookiesObject.get('sessionCartId')?.value;
+
+          if (sessionCartId) {
+            const sesstionCart = await prisma.cart.findFirst({
+              where: {
+                sessionCartId,
+              },
+            });
+
+            if (sesstionCart) {
+              // Delete current user cart
+              await prisma.cart.deleteMany({ where: { userId: user.id } });
+
+              // Assign new cart to user
+              await prisma.cart.update({
+                where: {
+                  id: sesstionCart.id,
+                },
+                data: {
+                  userId: user.id,
+                },
+              });
+            }
+          }
         }
       }
 

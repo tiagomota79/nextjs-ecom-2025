@@ -19,7 +19,7 @@ const ShippingAddressPage = async () => {
   const session = await auth();
   const userId = session?.user?.id;
 
-  if (!userId) throw new Error('User not found');
+  if (!userId) redirect('/');
 
   const user = await getUserById(userId);
 
